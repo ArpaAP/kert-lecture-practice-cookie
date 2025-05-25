@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from passlib.context import CryptContext
 import sqlite3
+import json
 
 app = FastAPI()
 
@@ -53,13 +54,21 @@ def login(user: UserLogin, response: Response):
     row = cursor.fetchone()
     if not row or not pwd_context.verify(user.password, row[0]):
         raise HTTPException(status_code=401, detail="아이디 또는 비밀번호가 올바르지 않습니다.")
-    response.set_cookie(key="user", value=user.username, httponly=False)
+    role = "admin" if user.username == "admin" else "user"
+    cookie_value = json.dumps({"username": user.username, "role": role})
+    response.set_cookie(key="user", value=cookie_value, httponly=False)
     return {"msg": "로그인 성공"}
 
 @app.get("/me")
 def get_me(user: str = Cookie(None)):
     if not user:
         return {"is_admin": False, "msg": "로그인 필요"}
-    if user == "admin":
-        return {"is_admin": True, "msg": "관리자입니다."}
-    return {"is_admin": False, "msg": f"{user}님, 일반 사용자입니다."} 
+    try:
+        user_info = json.loads(user)
+        role = user_info.get("role", "user")
+        username = user_info.get("username", "")
+    except Exception:
+        return {"is_admin": False, "msg": "쿠키 파싱 오류"}
+    if role == "admin":
+        return {"is_admin": True, "msg": f"{username}님, 관리자입니다."}
+    return {"is_admin": False, "msg": f"{username}님, 일반 사용자입니다."} 
