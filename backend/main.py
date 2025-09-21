@@ -22,12 +22,14 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 conn = sqlite3.connect("users.db", check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute("""
-CREATE TABLE IF NOT EXISTS users (
+DROP TABLE IF EXISTS users;
+CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
-)
-""")
+);
+INSERT INTO users (username, password) VALUES ('admin', ?);
+""", (pwd_context.hash("dbawlkdn2qjbdqj2dnklansld"),))
 conn.commit()
 
 class UserCreate(BaseModel):
