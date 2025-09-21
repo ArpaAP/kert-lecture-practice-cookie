@@ -22,7 +22,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 conn = sqlite3.connect("users.db", check_same_thread=False)
 cursor = conn.cursor()
 cursor.execute("DROP TABLE IF EXISTS users")
-
 cursor.execute("""
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
