@@ -1,10 +1,10 @@
-from fastapi import FastAPI, Request, Response, HTTPException, Depends, Cookie
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI, Response, HTTPException, Cookie
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from passlib.context import CryptContext
 import sqlite3
 import json
+import uuid
 
 app = FastAPI()
 
@@ -21,15 +21,16 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 # DB 초기화
 conn = sqlite3.connect("users.db", check_same_thread=False)
 cursor = conn.cursor()
+cursor.execute("DROP TABLE IF EXISTS users")
+
 cursor.execute("""
-DROP TABLE IF EXISTS users;
 CREATE TABLE users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL
-);
-INSERT INTO users (username, password) VALUES ('admin', ?);
-""", (pwd_context.hash("dbawlkdn2qjbdqj2dnklansld"),))
+)
+""")
+cursor.execute("INSERT INTO users (username, password) VALUES ('admin', ?)", (pwd_context.hash(uuid.uuid4().hex),))
 conn.commit()
 
 class UserCreate(BaseModel):
